@@ -33,9 +33,12 @@ public class MainActivity extends AppCompatActivity implements ActivityCompat.On
     private Button clear;
     private Button decrypt;
     private Button ok;
+    private Button sendKey;
     private EditText inputMessage;
     private EditText outputEncryption;
     private EditText phoneNum;
+    private EditText privKeyText;
+    private EditText pubKeyText;
     private TextView outputDecryption;
     private String input;
     private String encryptedMessage;
@@ -44,7 +47,8 @@ public class MainActivity extends AppCompatActivity implements ActivityCompat.On
     private byte[] decrypted;
     private PublicKey pubKey;
     private static final int REQUEST_PERMISSION = 9000;
-    private String encodedKey;
+    private String encodedPubKey;
+    private String encodedPrivKey;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -55,11 +59,14 @@ public class MainActivity extends AppCompatActivity implements ActivityCompat.On
         clear = findViewById(R.id.clear);
         decrypt = findViewById(R.id.buttonDecrypt);
         ok = findViewById(R.id.ok);
+        sendKey = findViewById(R.id.sendKey);
 
         inputMessage = findViewById(R.id.editText2);
         outputEncryption = findViewById(R.id.editText);
         outputDecryption = findViewById(R.id.decryptout);
         phoneNum = findViewById(R.id.phoneNum);
+        privKeyText = findViewById(R.id.privKey);
+        pubKeyText = findViewById(R.id.pubKey);
 
         inputMessage.setFocusableInTouchMode(true);
         inputMessage.requestFocus();
@@ -79,8 +86,8 @@ public class MainActivity extends AppCompatActivity implements ActivityCompat.On
                     // Encrypt the message
                     encrypted = RSA.encrypt(privateKey, input);
                     encryptedMessage = new String(encrypted);
-                    encodedKey = Base64.getEncoder().encodeToString(pubKey.getEncoded());
-                    outputEncryption.setText(encryptedMessage + encodedKey);
+                    encodedPubKey = Base64.getEncoder().encodeToString(pubKey.getEncoded());
+                    outputEncryption.setText(encryptedMessage + encodedPubKey);
                     runCode(v);
                 } catch (Exception e) {
                     // Popup message
@@ -122,6 +129,28 @@ public class MainActivity extends AppCompatActivity implements ActivityCompat.On
                 phoneNum.setEnabled(false);
             }
         });
+        sendKey.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                try {
+                    KeyPair keyPair = RSA.buildKeyPair();
+                    pubKey = keyPair.getPublic();
+                    PrivateKey privateKey = keyPair.getPrivate();
+
+                    encodedPubKey = Base64.getEncoder().encodeToString(pubKey.getEncoded());
+                    encodedPrivKey = Base64.getEncoder().encodeToString(privateKey.getEncoded());
+
+                    pubKeyText.setText(encodedPubKey);
+                    privKeyText.setText(encodedPrivKey);
+
+                    sendPubKey(view);
+
+                }
+                catch (Exception e) {
+
+                }
+            }
+        });
         checkPermissions();
     }
 
@@ -154,10 +183,20 @@ public class MainActivity extends AppCompatActivity implements ActivityCompat.On
 
     public void runCode(View view) {
         if (checkPermissions()) {
-            encodedKey = Base64.getEncoder().encodeToString(pubKey.getEncoded());
+            encodedPubKey = Base64.getEncoder().encodeToString(pubKey.getEncoded());
 
             SmsManager manager = SmsManager.getDefault();
             ArrayList<String> list = manager.divideMessage(pubKey.toString()/*+"HELLOWORLD"+encodedKey*/);
+            manager.sendMultipartTextMessage(phone, null, list, null, null);
+//            manager.sendTextMessage("7572142613", null, encryptedMessage, null, null);
+        }
+    }
+
+    public void sendPubKey(View view) {
+        if (checkPermissions()) {
+
+            SmsManager manager = SmsManager.getDefault();
+            ArrayList<String> list = manager.divideMessage(pubKey.toString());
             manager.sendMultipartTextMessage(phone, null, list, null, null);
 //            manager.sendTextMessage("7572142613", null, encryptedMessage, null, null);
         }
