@@ -123,8 +123,9 @@ public class MainActivity extends AppCompatActivity implements ActivityCompat.On
             public void onClick(View v) {
                 ok.setEnabled(false);
                 phone = phoneNum.getText().toString();
-                while (phone.contains("-")) {
+                while (phone.contains("-") && phone.contains(" ")) {
                     phone = phone.replace("-", "");
+                    phone = phone.replace(" ", "");
                 }
                 phoneNum.setEnabled(false);
             }
